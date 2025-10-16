@@ -1,4 +1,4 @@
-package com.appdev.cruquihi.cruzquirantehisolerg6.controller;
+package com.appdev.cruquihi.controller;
  
 import java.util.List;
  
@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.appdev.cruquihi.cruzquirantehisolerg6.entity.QrValidationEntity;
-import com.appdev.cruquihi.cruzquirantehisolerg6.service.QrValidationService;
+import com.appdev.cruquihi.entity.QrValidationEntity;
+import com.appdev.cruquihi.service.QrValidationService;
 
 import org.springframework.web.bind.annotation.RequestMethod;
  

@@ -1,12 +1,12 @@
-package com.appdev.cruquihi.cruzquirantehisolerg6.service;
+package com.appdev.cruquihi.service;
 
 import java.util.List;
  
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.appdev.cruquihi.cruzquirantehisolerg6.entity.QrValidationEntity;
-import com.appdev.cruquihi.cruzquirantehisolerg6.repository.QrValidationRepository;
+import com.appdev.cruquihi.entity.QrValidationEntity;
+import com.appdev.cruquihi.repository.QrValidationRepository;
  
 
 @Service

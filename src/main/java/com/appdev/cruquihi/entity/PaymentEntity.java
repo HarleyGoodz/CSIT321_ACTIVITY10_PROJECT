@@ -1,4 +1,4 @@
-package com.appdev.cruquihi.cruzquirantehisolerg6.entity;
+package com.appdev.cruquihi.entity;
 
 
 import jakarta.persistence.Entity;
