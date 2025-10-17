@@ -24,6 +24,19 @@ public class CheckinEntity {
     public CheckinEntity() {
         super();
     }
+    
+    
+
+    public CheckinEntity(int checkinId, UserEntity user, EventEntity event, LocalDateTime checkinDate,
+            String checkinStatus) {
+        this.checkinId = checkinId;
+        this.user = user;
+        this.event = event;
+        this.checkinDate = checkinDate;
+        this.checkinStatus = checkinStatus;
+    }
+
+
 
     public int getCheckinId() {
         return checkinId;
