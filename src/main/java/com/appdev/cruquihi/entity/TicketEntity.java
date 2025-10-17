@@ -14,12 +14,22 @@ public class TicketEntity {
     @JoinColumn(name = "event_id") // FK -> event
     private EventEntity event;
 
-    private BigDecimal ticketPrice;
+    private double ticketPrice;
     private String ticketType;
     private Boolean availability;
 
     public TicketEntity() {
         super();
+    }
+
+
+    public TicketEntity(int ticketId, EventEntity event, double ticketPrice, String ticketType,
+            Boolean availability) {
+        this.ticketId = ticketId;
+        this.event = event;
+        this.ticketPrice = ticketPrice;
+        this.ticketType = ticketType;
+        this.availability = availability;
     }
 
     public int getTicketId() {
@@ -36,10 +46,10 @@ public class TicketEntity {
         this.event = event;
     }
 
-    public BigDecimal getTicketPrice() {
+    public double getTicketPrice() {
         return ticketPrice;
     }
-    public void setTicketPrice(BigDecimal ticketPrice) {
+    public void setTicketPrice(double ticketPrice) {
         this.ticketPrice = ticketPrice;
     }
 
