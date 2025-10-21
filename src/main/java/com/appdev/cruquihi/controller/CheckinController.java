@@ -5,53 +5,45 @@ import java.util.List;
 import org.springframework.web.bind.annotation.*;
 
 import com.appdev.cruquihi.entity.CheckinEntity;
-import com.appdev.cruquihi.repository.CheckinRepository;
+import com.appdev.cruquihi.service.CheckinService;
 
 @RestController
-@RequestMapping(method = RequestMethod.GET, path = "/api/checkin")
-@CrossOrigin
+@RequestMapping(path = "/api/checkin")
 public class CheckinController {
 
-    private final CheckinRepository checkinRepo;
+    private final CheckinService scheckin;
 
-    public CheckinController(CheckinRepository checkinRepo) {
-        this.checkinRepo = checkinRepo;
+    public CheckinController(CheckinService scheckin) {
+        this.scheckin = scheckin;
     }
 
     // CREATE
     @PostMapping("/add")
     public CheckinEntity createCheckin(@RequestBody CheckinEntity checkin) {
-        return checkinRepo.save(checkin);
+        return scheckin.createCheckin(checkin);
     }
 
     // READ ALL
     @GetMapping("/all")
     public List<CheckinEntity> getAllCheckins() {
-        return checkinRepo.findAll();
+        return scheckin.getAllCheckins();
     }
 
     // READ BY ID
     @GetMapping("/{id}")
     public CheckinEntity getCheckinById(@PathVariable Integer id) {
-        return checkinRepo.findById(id).orElse(null);
+        return scheckin.getCheckinById(id).orElse(null);
     }
 
     // UPDATE
     @PutMapping("/update/{id}")
     public CheckinEntity updateCheckin(@PathVariable Integer id, @RequestBody CheckinEntity updated) {
-        return checkinRepo.findById(id).map(c -> {
-            c.setUser(updated.getUser());
-            c.setEvent(updated.getEvent());
-            c.setCheckinDate(updated.getCheckinDate());
-            c.setCheckinStatus(updated.getCheckinStatus());
-            return checkinRepo.save(c);
-        }).orElse(null);
+        return scheckin.updateCheckin(id, updated);
     }
 
     // DELETE
     @DeleteMapping("/delete/{id}")
     public String deleteCheckin(@PathVariable Integer id) {
-        checkinRepo.deleteById(id);
-        return "Checkin deleted successfully.";
+        return scheckin.deleteCheckin(id);
     }
 }
