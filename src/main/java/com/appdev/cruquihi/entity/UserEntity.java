@@ -12,7 +12,7 @@ public class UserEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userId;
+    private int userId;
 
     private String emailAddress;
     private String fullname;
@@ -33,10 +33,10 @@ public class UserEntity {
     }
 
     // Getters and Setters
-    public Long getUserId() { 
+    public int getUserId() { 
         return userId; 
     }
-    public void setUserId(Long userId) { 
+    public void setUserId(int userId) { 
         this.userId = userId; 
     }
 
@@ -68,7 +68,4 @@ public class UserEntity {
         this.role = role; 
     }
 
-    public void setEmail(String emailAddress2) {
-        this.emailAddress = emailAddress2;
-    }
 }

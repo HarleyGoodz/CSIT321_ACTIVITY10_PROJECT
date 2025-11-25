@@ -15,7 +15,7 @@ import jakarta.persistence.Table;
 public class EventEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long eventId;
+    private int eventId;
 
     @ManyToOne
     @JoinColumn(name = "user_id") // FK
@@ -30,18 +30,36 @@ public class EventEntity {
     private String eventCategory;
     private String createdBy;
     private LocalDateTime createdAt;
-    private Integer ticketLimit;
+    private int ticketLimit;
 
     // Constructors
     public EventEntity() {
         super();
     }
 
+    public EventEntity(int eventId, UserEntity user, String eventName, String eventDescription,
+                   String eventVenue, LocalDateTime eventStartTime, LocalDateTime eventEndTime,
+                   String eventStatus, String eventCategory, String createdBy,
+                   LocalDateTime createdAt, int ticketLimit) {
+    super();
+    this.user = user;
+    this.eventName = eventName;
+    this.eventDescription = eventDescription;
+    this.eventVenue = eventVenue;
+    this.eventStartTime = eventStartTime;
+    this.eventEndTime = eventEndTime;
+    this.eventStatus = eventStatus;
+    this.eventCategory = eventCategory;
+    this.createdBy = createdBy;
+    this.createdAt = createdAt;
+    this.ticketLimit = ticketLimit;
+}
+
     // Getters and Setters
-    public Long getEventId() { 
+    public int getEventId() { 
         return eventId; 
     }
-    public void setEventId(Long eventId) { 
+    public void setEventId(int eventId) { 
         this.eventId = eventId; 
     }
 
@@ -115,10 +133,10 @@ public class EventEntity {
         this.createdAt = createdAt; 
     }
 
-    public Integer getTicketLimit() { 
+    public int getTicketLimit() { 
         return ticketLimit; 
     }
-    public void setTicketLimit(Integer ticketLimit) { 
+    public void setTicketLimit(int ticketLimit) { 
         this.ticketLimit = ticketLimit; 
     }
     
