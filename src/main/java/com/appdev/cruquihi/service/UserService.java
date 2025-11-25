@@ -14,6 +14,7 @@ import com.appdev.cruquihi.repository.UserRepository;
 public class UserService {
 
     @Autowired
+    public
     UserRepository urepo;
 
     public UserService() {
@@ -41,7 +42,8 @@ public class UserService {
         try{
             user = urepo.findById(id).get();
             user.setFullname(newUserDetails.getFullname());
-            user.setEmail(newUserDetails.getEmailAddress());
+            user.setEmailAddress(newUserDetails.getEmailAddress());
+            user.setPassword(newUserDetails.getPassword());
         } catch (NoSuchElementException e) {
            throw new NoSuchElementException("User with ID " + id + " not found.");
         } finally {
@@ -63,4 +65,5 @@ public class UserService {
         return msg;
     }
 
+    
 }

@@ -1,7 +1,6 @@
 package com.appdev.cruquihi.entity;
 
 import jakarta.persistence.*;
-import java.math.BigDecimal;
 
 @Entity
 @Table(name = "ticket")
