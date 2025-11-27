@@ -8,10 +8,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.appdev.cruquihi.entity.EventEntity;
+import com.appdev.cruquihi.entity.UserEntity;
 import com.appdev.cruquihi.repository.EventRepository;
+import com.appdev.cruquihi.repository.UserRepository;
 
 @Service
 public class EventService {
+
+    @Autowired
+    UserRepository urepo;
 
     @Autowired
     EventRepository erepo;
@@ -20,54 +25,53 @@ public class EventService {
         super();
     }
 
-    // CREATE
-    public EventEntity createEvent(EventEntity event) {
+    // CREATE EVENT
+    public EventEntity createEvent(EventEntity event, int userId) {
+        UserEntity user = urepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        event.setUser(user);                      
+        event.setCreatedBy(user.getFullname());   // automatically set createdBy to user's fullname
+
         return erepo.save(event);
     }
 
-    // READ ALL
+    // GET ALL
     public List<EventEntity> getAllEvents() {
         return erepo.findAll();
     }
 
-    // READ BY ID
+    // GET BY ID
     public Optional<EventEntity> getEventById(Integer id) {
         return erepo.findById(id);
     }
 
     // UPDATE
-    public EventEntity updateEvent(Integer id, EventEntity newEventDetails) {
-        EventEntity event = new EventEntity();
-        try {
-            event = erepo.findById(id).get();
-            event.setEventName(newEventDetails.getEventName());
-            event.setEventDescription(newEventDetails.getEventDescription());
-            event.setEventVenue(newEventDetails.getEventVenue());
-            event.setEventStartTime(newEventDetails.getEventStartTime());
-            event.setEventEndTime(newEventDetails.getEventEndTime());
-            event.setEventStatus(newEventDetails.getEventStatus());
-            event.setEventCategory(newEventDetails.getEventCategory());
-            event.setCreatedBy(newEventDetails.getCreatedBy());
-            event.setCreatedAt(newEventDetails.getCreatedAt());
-            event.setTicketLimit(newEventDetails.getTicketLimit());
-        } catch (NoSuchElementException e) {
-            throw new NoSuchElementException("Event with ID " + id + " not found.");
-        } finally {
-            return erepo.save(event);
-        }
+    public EventEntity updateEvent(Integer id, EventEntity update) {
+
+        EventEntity event = erepo.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Event with ID " + id + " not found"));
+
+        event.setEventName(update.getEventName());
+        event.setEventDescription(update.getEventDescription());
+        event.setEventVenue(update.getEventVenue());
+        event.setEventStartTime(update.getEventStartTime());
+        event.setEventEndTime(update.getEventEndTime());
+        event.setEventStatus(update.getEventStatus());
+        event.setEventCategory(update.getEventCategory());
+        event.setCreatedAt(update.getCreatedAt());
+        event.setTicketLimit(update.getTicketLimit());
+
+        return erepo.save(event);
     }
 
     // DELETE
     public String deleteEvent(Integer id) {
-        String msg = "";
-
         if (erepo.findById(id).isPresent()) {
             erepo.deleteById(id);
-            msg = "Event with ID " + id + " has been deleted.";
+            return "Event with ID " + id + " has been deleted.";
         } else {
-            msg = "Event with ID " + id + " not found.";
+            return "Event with ID " + id + " not found.";
         }
-
-        return msg;
     }
 }
