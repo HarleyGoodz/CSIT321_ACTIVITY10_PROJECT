@@ -1,61 +1,78 @@
 package com.appdev.cruquihi.controller;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.appdev.cruquihi.entity.EventEntity;
-import com.appdev.cruquihi.repository.EventRepository;
+import com.appdev.cruquihi.service.EventService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 @RestController
-@RequestMapping(method = RequestMethod.GET,path = "/api/event")
-@CrossOrigin
+@RequestMapping("/api/events")
 public class EventController {
 
-    private final EventRepository eventRepo;
+    @Autowired
+    EventService eserv;
 
-    public EventController(EventRepository eventRepo) {
-        this.eventRepo = eventRepo;
+    // CREATE EVENT
+    @PostMapping("/add")
+    public ResponseEntity<?> addEvent(@RequestBody Map<String, Object> body) {
+        try {
+            int userId = (int) body.get("userId");
+            body.remove("userId");
+
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            EventEntity event = mapper.convertValue(body, EventEntity.class);
+
+            EventEntity saved = eserv.createEvent(event, userId);
+            return ResponseEntity.ok(saved);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body("Error: " + e.getMessage());
+        }
     }
 
-    // CREATE
-    @PostMapping
-    public EventEntity createEvent(@RequestBody EventEntity event) {
-        return eventRepo.save(event);
+    // GET ALL EVENTS
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllEvents() {
+        List<EventEntity> events = eserv.getAllEvents();
+        return ResponseEntity.ok(events);
     }
 
-    // READ ALL
-    @GetMapping
-    public List<EventEntity> getAllEvents() {
-        return eventRepo.findAll();
-    }
-
-    // READ ONE
+    // GET EVENT BY ID
     @GetMapping("/{id}")
-    public EventEntity getEventById(@PathVariable Integer id) {
-        return eventRepo.findById(id).orElse(null);
+    public ResponseEntity<?> getEvent(@PathVariable Integer id) {
+        Optional<EventEntity> event = eserv.getEventById(id);
+
+        if (event.isPresent()) {
+            return ResponseEntity.ok(event.get());
+        } else {
+            return ResponseEntity.status(404).body("Event not found");
+        }
     }
 
-    // UPDATE
-    @PutMapping("/{id}")
-    public EventEntity updateEvent(@PathVariable Integer id, @RequestBody EventEntity updatedEvent) {
-        return eventRepo.findById(id).map(event -> {
-            event.setEventName(updatedEvent.getEventName());
-            event.setEventDescription(updatedEvent.getEventDescription());
-            event.setEventVenue(updatedEvent.getEventVenue());
-            event.setEventStartTime(updatedEvent.getEventStartTime());
-            event.setEventEndTime(updatedEvent.getEventEndTime());
-            event.setEventStatus(updatedEvent.getEventStatus());
-            event.setEventCategory(updatedEvent.getEventCategory());
-            event.setTicketLimit(updatedEvent.getTicketLimit());
-            return eventRepo.save(event);
-        }).orElse(null);
+    // UPDATE EVENT
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateEvent(@PathVariable Integer id, @RequestBody EventEntity updatedEvent) {
+        try {
+            EventEntity event = eserv.updateEvent(id, updatedEvent);
+            return ResponseEntity.ok(event);
+        } catch (Exception e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
     }
 
-    // DELETE
-    @DeleteMapping("/{id}")
-    public String deleteEvent(@PathVariable Integer id) {
-        eventRepo.deleteById(id);
-        return "Event deleted successfully.";
+    // DELETE EVENT
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> deleteEvent(@PathVariable Integer id) {
+        String msg = eserv.deleteEvent(id);
+        return ResponseEntity.ok(msg);
     }
 }

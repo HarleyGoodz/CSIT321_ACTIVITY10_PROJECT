@@ -14,7 +14,6 @@ import com.appdev.cruquihi.repository.UserRepository;
 public class UserService {
 
     @Autowired
-    public
     UserRepository urepo;
 
     public UserService() {
@@ -32,38 +31,43 @@ public class UserService {
     }
 
     // READ BY ID
-    public Optional<UserEntity> getUserById(Integer id) {
-        return urepo.findById(id);
+    public UserEntity getUserById(int id) {
+        return urepo.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("User with ID " + id + " not found"));
     }
 
     // UPDATE
-    public UserEntity updateUser(Integer id, UserEntity newUserDetails) {
-        UserEntity user = new UserEntity();
-        try{
-            user = urepo.findById(id).get();
-            user.setFullname(newUserDetails.getFullname());
-            user.setEmailAddress(newUserDetails.getEmailAddress());
-            user.setPassword(newUserDetails.getPassword());
-        } catch (NoSuchElementException e) {
-           throw new NoSuchElementException("User with ID " + id + " not found.");
-        } finally {
-            return urepo.save(user);
-        }
+    public UserEntity updateUser(int id, UserEntity newUser) {
+
+        UserEntity user = urepo.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("User with ID " + id + " not found"));
+
+        user.setEmailAddress(newUser.getEmailAddress());
+        user.setFullname(newUser.getFullname());
+        user.setPassword(newUser.getPassword());
+        user.setRole(newUser.getRole());
+
+        return urepo.save(user);
     }
 
     // DELETE
-    public String deleteUser(Integer id) {
-        String msg = "";
-
-        if (urepo.findById(id) != null) {
+    public String deleteUser(int id) {
+        if (urepo.findById(id).isPresent()) {
             urepo.deleteById(id);
-            msg = "User with ID " + id + " has been deleted.";
+            return "User with ID " + id + " has been deleted.";
         } else {
-            msg = "User with ID " + id + " not found.";
+            return "User with ID " + id + " not found.";
         }
-
-        return msg;
     }
 
-    
+    // FIND BY EMAIL OR FULLNAME (LOGIN)
+    public Optional<UserEntity> findByEmailOrFullname(String value) {
+    Optional<UserEntity> user = urepo.findByEmailAddress(value);
+
+    if (user.isEmpty()) {
+        user = urepo.findByFullname(value);
+    }
+
+    return user;
+}
 }
