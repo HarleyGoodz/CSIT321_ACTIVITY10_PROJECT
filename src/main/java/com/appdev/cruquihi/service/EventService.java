@@ -76,4 +76,9 @@ public class EventService {
             return "Event with ID " + id + " not found.";
         }
     }
+
+    public List<EventEntity> getEventsByUser(Integer userId) {
+    return erepo.findAllByUserUserId(userId); // or implement repository query
+}
+
 }

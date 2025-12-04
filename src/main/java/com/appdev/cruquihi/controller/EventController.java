@@ -13,10 +13,13 @@ import com.appdev.cruquihi.service.EventService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+@CrossOrigin(origins = "http://localhost:3000")
+
 @RestController
 @RequestMapping("/api/events")
 public class EventController {
-
+    
+    
     @Autowired
     EventService eserv;
 
@@ -74,5 +77,11 @@ public class EventController {
     public ResponseEntity<?> deleteEvent(@PathVariable Integer id) {
         String msg = eserv.deleteEvent(id);
         return ResponseEntity.ok(msg);
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<?> getEventsByUser(@PathVariable Integer userId) {
+        List<EventEntity> events = eserv.getEventsByUser(userId);
+        return ResponseEntity.ok(events);
     }
 }
