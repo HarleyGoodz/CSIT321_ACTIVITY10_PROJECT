@@ -34,7 +34,7 @@ public class EventService {
         event.setUser(user);                      
         event.setCreatedBy(user.getFullname());   // automatically set createdBy to user's fullname
         
-        //event.setCreatedAt(LocalDateTime.now()); // auto fill in time 
+        event.setCreatedAt(LocalDateTime.now()); // auto fill in time 
         return erepo.save(event);
     }
 
