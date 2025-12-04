@@ -14,7 +14,7 @@ import com.appdev.cruquihi.repository.UserRepository;
 public class UserService {
 
     @Autowired
-    UserRepository urepo;
+    private UserRepository urepo;
 
     public UserService() {
         super();
@@ -22,6 +22,8 @@ public class UserService {
 
     // CREATE
     public UserEntity createUser(UserEntity user) {
+        // NOTE: currently saving raw password (plaintext).
+        // For production, hash with BCrypt and store the hash instead.
         return urepo.save(user);
     }
 
@@ -44,7 +46,10 @@ public class UserService {
 
         user.setEmailAddress(newUser.getEmailAddress());
         user.setFullname(newUser.getFullname());
-        user.setPassword(newUser.getPassword());
+        // If client provided a new password, update it (plaintext here)
+        if (newUser.getPassword() != null && !newUser.getPassword().isEmpty()) {
+            user.setPassword(newUser.getPassword());
+        }
         user.setRole(newUser.getRole());
 
         return urepo.save(user);
@@ -62,12 +67,18 @@ public class UserService {
 
     // FIND BY EMAIL OR FULLNAME (LOGIN)
     public Optional<UserEntity> findByEmailOrFullname(String value) {
-    Optional<UserEntity> user = urepo.findByEmailAddress(value);
+        Optional<UserEntity> user = urepo.findByEmailAddress(value);
 
-    if (user.isEmpty()) {
-        user = urepo.findByFullname(value);
+        if (user.isEmpty()) {
+            user = urepo.findByFullname(value);
+        }
+
+        return user;
     }
 
-    return user;
-}
+    // helper to check raw password vs stored value (plaintext comparison here)
+    public boolean checkPassword(UserEntity user, String rawPassword) {
+        if (user == null || rawPassword == null) return false;
+        return rawPassword.equals(user.getPassword());
+    }
 }
