@@ -1,10 +1,12 @@
 package com.appdev.cruquihi.entity;
 
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import java.time.LocalDate;
 
 @Entity
 public class PaymentEntity {
@@ -15,15 +17,17 @@ public class PaymentEntity {
 
     private String payment_method;
     private Double payment_amount;
-    private float payment_timestamp;
+    private LocalDate payment_timestamp;
     private String payment_status;
+
+    @Column(name = "reference_code")
     private String reference_code;
 
     public PaymentEntity(){
         super();
     }
 
-    public PaymentEntity(int id, String payment_method, Double payment_amount, float payment_timestamp,
+    public PaymentEntity(int id, String payment_method, Double payment_amount, LocalDate payment_timestamp,
      String payment_status, String reference_code) {
         this.id = id;
         this.payment_method = payment_method;
@@ -53,11 +57,11 @@ public class PaymentEntity {
         this.payment_amount = payment_amount;
     }  
 
-    public float getPayment_timestamp() {
+    public LocalDate getPayment_timestamp() {
         return payment_timestamp;
     }
 
-    public void setPayment_timestamp(float payment_timestamp) {
+    public void setPayment_timestamp(LocalDate payment_timestamp) {
         this.payment_timestamp = payment_timestamp;
     }   
 
@@ -69,11 +73,11 @@ public class PaymentEntity {
         this.payment_status = payment_status;
     }
 
-    public String getRefernence_code() {
+    public String getReference_code() {
         return reference_code;
     }
 
-    public void setRefernence_code(String refernence_code) {
-        this.reference_code = refernence_code;
+    public void setReference_code(String reference_code) {
+        this.reference_code = reference_code;
     }
 }

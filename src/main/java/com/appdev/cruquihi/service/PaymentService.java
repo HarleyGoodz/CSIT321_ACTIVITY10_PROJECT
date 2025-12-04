@@ -45,7 +45,7 @@ public class PaymentService {
             payment.setPayment_amount(newPaymentDetails.getPayment_amount());
             payment.setPayment_timestamp(newPaymentDetails.getPayment_timestamp());
             payment.setPayment_status(newPaymentDetails.getPayment_status());
-            payment.setRefernence_code(newPaymentDetails.getRefernence_code());
+            payment.setReference_code(newPaymentDetails.getReference_code());
 
             return paymentRepository.save(payment);
 
