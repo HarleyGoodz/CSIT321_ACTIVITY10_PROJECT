@@ -2,6 +2,7 @@ package com.appdev.cruquihi.controller;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -10,7 +11,7 @@ import com.appdev.cruquihi.entity.PaymentEntity;
 import com.appdev.cruquihi.service.PaymentService;
 
 @RestController
-@RequestMapping(method = RequestMethod.GET, path = "/api/payment")
+@RequestMapping(path = "/api/payment")   // ❗ FIXED: removed method=GET
 public class PaymentController {
 
     @Autowired
@@ -26,6 +27,14 @@ public class PaymentController {
     @PostMapping("/add")
     public PaymentEntity addPayment(@RequestBody PaymentEntity paymentEntity) {
         return paymentService.postPaymentRecord(paymentEntity);
+    }
+
+    // 🟢 PURCHASE TICKET (returns ticketPrice + remainingWallet)
+    @PostMapping("/purchase")
+    public Map<String, Object> purchase(
+            @RequestParam int userId,
+            @RequestParam int ticketId) {
+        return paymentService.purchase(userId, ticketId);
     }
 
     // 🟡 READ all
