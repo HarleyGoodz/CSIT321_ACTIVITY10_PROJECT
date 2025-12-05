@@ -19,9 +19,12 @@ public class UserEntity {
     private String password;
     private String role;
 
+    private double walletAmount = 10000.00; // NEW FIELD – default ₱10,000
+
     // Constructors
     public UserEntity() {
         super();
+        this.walletAmount = 10000.00; // default value
     }
 
     public UserEntity(String emailAddress, String fullname, String password, String role) {
@@ -30,6 +33,7 @@ public class UserEntity {
         this.fullname = fullname;
         this.password = password;
         this.role = role;
+        this.walletAmount = 10000.00; // default value
     }
 
     // Getters and Setters
@@ -68,4 +72,10 @@ public class UserEntity {
         this.role = role; 
     }
 
+    public double getWalletAmount() {
+        return walletAmount;
+    }
+    public void setWalletAmount(double walletAmount) {
+        this.walletAmount = walletAmount;
+    }
 }
