@@ -25,6 +25,10 @@ public class PaymentService {
     @Autowired
     private UserRepository userRepo;
 
+    // NEW: email service
+    @Autowired
+    private EmailService emailService;
+
     public PaymentService() {
         super();
     }
@@ -61,6 +65,23 @@ public class PaymentService {
         payment.setUser(user);
 
         paymentRepo.save(payment);
+
+        // NEW: QR Metadata & timestamps
+        String qrValue = UUID.randomUUID().toString();
+        String validatedBy = "System";
+        String generatedAt = LocalDate.now().toString();
+        String usedAt = "Not used yet";
+
+        // NEW: send email with ticket details
+        emailService.sendTicketEmail(
+                user.getEmailAddress(),
+                ticketPrice,
+                remaining,
+                qrValue,
+                validatedBy,
+                generatedAt,
+                usedAt
+        );
 
         // response for frontend
         Map<String, Object> result = new HashMap<>();
