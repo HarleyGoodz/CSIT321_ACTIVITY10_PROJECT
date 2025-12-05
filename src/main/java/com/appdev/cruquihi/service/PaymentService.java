@@ -1,65 +1,111 @@
 package com.appdev.cruquihi.service;
 
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.appdev.cruquihi.entity.PaymentEntity;
+import com.appdev.cruquihi.entity.TicketEntity;
+import com.appdev.cruquihi.entity.UserEntity;
 import com.appdev.cruquihi.repository.PaymentRepository;
+import com.appdev.cruquihi.repository.TicketRepository;
+import com.appdev.cruquihi.repository.UserRepository;
 
 @Service
 public class PaymentService {
 
     @Autowired
-    PaymentRepository paymentRepository;
+    private PaymentRepository paymentRepo;
+
+    @Autowired
+    private TicketRepository ticketRepo;
+
+    @Autowired
+    private UserRepository userRepo;
 
     public PaymentService() {
         super();
     }
 
-    // CREATE
+    // 🟢 NEW METHOD: purchase a ticket and return price + remaining wallet
+    public Map<String, Object> purchase(int userId, int ticketId) {
+
+        UserEntity user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        TicketEntity ticket = ticketRepo.findById(ticketId)
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+        double ticketPrice = ticket.getTicketPrice();
+        double wallet = user.getWalletAmount();
+
+        if (wallet < ticketPrice) {
+            throw new RuntimeException("Insufficient wallet balance");
+        }
+
+        // deduct wallet
+        double remaining = wallet - ticketPrice;
+        user.setWalletAmount(remaining);
+        userRepo.save(user);
+
+        // create payment record
+        PaymentEntity payment = new PaymentEntity();
+        payment.setPayment_method("wallet");
+        payment.setPayment_amount(ticketPrice);
+        payment.setPayment_timestamp(LocalDate.now());
+        payment.setPayment_status("SUCCESS");
+        payment.setReference_code(UUID.randomUUID().toString());
+        payment.setTicket(ticket);
+        payment.setUser(user);
+
+        paymentRepo.save(payment);
+
+        // response for frontend
+        Map<String, Object> result = new HashMap<>();
+        result.put("ticketPrice", ticketPrice);
+        result.put("remainingWallet", remaining);
+
+        return result;
+    }
+
+    // ============================
+    // YOUR ORIGINAL METHODS
+    // ============================
+
     public PaymentEntity postPaymentRecord(PaymentEntity paymentEntity) {
-        return paymentRepository.save(paymentEntity);
+        return paymentRepo.save(paymentEntity);
     }
 
-    // READ ALL
     public List<PaymentEntity> getAllPayments() {
-        return paymentRepository.findAll();
+        return paymentRepo.findAll();
     }
 
-    // READ BY ID
     public Optional<PaymentEntity> getPaymentById(Integer id) {
-        return paymentRepository.findById(id);
+        return paymentRepo.findById(id);
     }
 
-    // UPDATE
-    public PaymentEntity updatePayment(Integer id, PaymentEntity newPaymentDetails) {
-        try {
-            PaymentEntity payment = paymentRepository.findById(id)
-                    .orElseThrow(() -> new NoSuchElementException("Payment with ID " + id + " not found."));
-
-            payment.setPayment_method(newPaymentDetails.getPayment_method());
-            payment.setPayment_amount(newPaymentDetails.getPayment_amount());
-            payment.setPayment_timestamp(newPaymentDetails.getPayment_timestamp());
-            payment.setPayment_status(newPaymentDetails.getPayment_status());
-            payment.setReference_code(newPaymentDetails.getReference_code());
-
-            return paymentRepository.save(payment);
-
-        } catch (NoSuchElementException e) {
-            throw e;
+    public PaymentEntity updatePayment(Integer id, PaymentEntity newDetails) {
+        Optional<PaymentEntity> optional = paymentRepo.findById(id);
+        if (optional.isPresent()) {
+            PaymentEntity existing = optional.get();
+            existing.setPayment_method(newDetails.getPayment_method());
+            existing.setPayment_amount(newDetails.getPayment_amount());
+            existing.setPayment_timestamp(newDetails.getPayment_timestamp());
+            existing.setPayment_status(newDetails.getPayment_status());
+            existing.setReference_code(newDetails.getReference_code());
+            return paymentRepo.save(existing);
         }
+        return null;
     }
 
-    // DELETE
     public String deletePayment(Integer id) {
-        if (paymentRepository.findById(id).isPresent()) {
-            paymentRepository.deleteById(id);
-            return "Payment with ID " + id + " has been deleted.";
+        if (paymentRepo.existsById(id)) {
+            paymentRepo.deleteById(id);
+            return "Payment deleted";
+        } else {
+            return "Payment not found";
         }
-        return "Payment with ID " + id + " not found.";
     }
 }
