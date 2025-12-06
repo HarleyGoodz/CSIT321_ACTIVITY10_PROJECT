@@ -66,22 +66,49 @@ public class PaymentService {
 
         paymentRepo.save(payment);
 
-        // NEW: QR Metadata & timestamps
-        String qrValue = UUID.randomUUID().toString();
+        // ============================================
+        // 🔥 UPDATED QR CODE SECTION
+        // ============================================
+
         String validatedBy = "System";
         String generatedAt = LocalDate.now().toString();
         String usedAt = "Not used yet";
 
-        // NEW: send email with ticket details
+        // FORMAT EVENT TIMES
+        String startTime = ticket.getEvent().getEventStartTime().toLocalTime().toString();
+        String endTime = ticket.getEvent().getEventEndTime().toLocalTime().toString();
+
+        String formattedStart = java.time.LocalTime.parse(startTime)
+                .format(java.time.format.DateTimeFormatter.ofPattern("h:mma"));
+
+        String formattedEnd = java.time.LocalTime.parse(endTime)
+                .format(java.time.format.DateTimeFormatter.ofPattern("h:mma"));
+
+        String formattedTime = formattedStart + " - " + formattedEnd;
+
+        // QR CONTENT
+        String qrText =
+                "Event: " + ticket.getEvent().getEventName() + "\n" +
+                "Ticket ID: " + ticket.getTicketId() + "\n" +
+                "Schedule: " + formattedTime + "\n" +
+                "Validated By: " + validatedBy + "\n" +
+                "Generated At: " + generatedAt + "\n" +
+                "Used At: " + usedAt;
+
+        // SEND EMAIL INCLUDING QR
         emailService.sendTicketEmail(
                 user.getEmailAddress(),
                 ticketPrice,
                 remaining,
-                qrValue,
+                qrText,
                 validatedBy,
                 generatedAt,
                 usedAt
         );
+
+        // ============================================
+        // END UPDATED QR CODE SECTION
+        // ============================================
 
         // response for frontend
         Map<String, Object> result = new HashMap<>();
