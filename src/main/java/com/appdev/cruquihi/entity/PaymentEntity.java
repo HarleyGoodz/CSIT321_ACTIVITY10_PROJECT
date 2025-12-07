@@ -29,7 +29,7 @@ public class PaymentEntity {
     @JoinColumn(name = "ticket_id", referencedColumnName = "ticketId")
     private TicketEntity ticket;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "userId")
     private UserEntity user;
 
