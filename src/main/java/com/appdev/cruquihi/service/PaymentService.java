@@ -7,9 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.appdev.cruquihi.entity.PaymentEntity;
+import com.appdev.cruquihi.entity.QrValidationEntity;
 import com.appdev.cruquihi.entity.TicketEntity;
 import com.appdev.cruquihi.entity.UserEntity;
 import com.appdev.cruquihi.repository.PaymentRepository;
+import com.appdev.cruquihi.repository.QrValidationRepository;
 import com.appdev.cruquihi.repository.TicketRepository;
 import com.appdev.cruquihi.repository.UserRepository;
 
@@ -25,15 +27,17 @@ public class PaymentService {
     @Autowired
     private UserRepository userRepo;
 
-    // NEW: email service
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private QrValidationRepository qrRepo;
 
     public PaymentService() {
         super();
     }
 
-    // 🟢 NEW METHOD: purchase a ticket and return price + remaining wallet
+    // 🟢 PURCHASE TICKET (CORRECTED)
     public Map<String, Object> purchase(int userId, int ticketId) {
 
         UserEntity user = userRepo.findById(userId)
@@ -42,6 +46,17 @@ public class PaymentService {
         TicketEntity ticket = ticketRepo.findById(ticketId)
                 .orElseThrow(() -> new RuntimeException("Ticket not found"));
 
+        // 🛑 BLOCK MULTIPLE PURCHASES (1 per event only)
+        boolean alreadyBought =
+                paymentRepo.existsByUserUserIdAndTicketEventEventId(
+                        userId,
+                        ticket.getEvent().getEventId()
+                );
+
+        if (alreadyBought) {
+            throw new RuntimeException("User already purchased a ticket for this event.");
+        }
+
         double ticketPrice = ticket.getTicketPrice();
         double wallet = user.getWalletAmount();
 
@@ -49,12 +64,12 @@ public class PaymentService {
             throw new RuntimeException("Insufficient wallet balance");
         }
 
-        // deduct wallet
+        // Deduct wallet
         double remaining = wallet - ticketPrice;
         user.setWalletAmount(remaining);
         userRepo.save(user);
 
-        // create payment record
+        // Create payment record
         PaymentEntity payment = new PaymentEntity();
         payment.setPayment_method("wallet");
         payment.setPayment_amount(ticketPrice);
@@ -66,51 +81,41 @@ public class PaymentService {
 
         paymentRepo.save(payment);
 
-        // ============================================
-        // 🔥 UPDATED QR CODE SECTION
-        // ============================================
+        // ===============================
+        // 🔥 UPDATE THIS TICKET AVAILABILITY
+        // ===============================
+        ticket.setAvailability(false);
+        ticketRepo.save(ticket);
 
+        // ===============================
+        // 🔥 CREATE QR VALIDATION ENTRY
+        // ===============================
+        String qrValue = UUID.randomUUID().toString();
         String validatedBy = "System";
         String generatedAt = LocalDate.now().toString();
         String usedAt = "Not used yet";
 
-        // FORMAT EVENT TIMES
-        String startTime = ticket.getEvent().getEventStartTime().toLocalTime().toString();
-        String endTime = ticket.getEvent().getEventEndTime().toLocalTime().toString();
+        QrValidationEntity qr = new QrValidationEntity();
+        qr.setGenerated_at(generatedAt);
+        qr.setValidation_status("Valid");
+        qr.setValidated_by(validatedBy);
+        qr.setUsed_at(usedAt);
+        qr.setPayment(payment);
 
-        String formattedStart = java.time.LocalTime.parse(startTime)
-                .format(java.time.format.DateTimeFormatter.ofPattern("h:mma"));
+        qrRepo.save(qr);
 
-        String formattedEnd = java.time.LocalTime.parse(endTime)
-                .format(java.time.format.DateTimeFormatter.ofPattern("h:mma"));
-
-        String formattedTime = formattedStart + " - " + formattedEnd;
-
-        // QR CONTENT
-        String qrText =
-                "Event: " + ticket.getEvent().getEventName() + "\n" +
-                "Ticket ID: " + ticket.getTicketId() + "\n" +
-                "Schedule: " + formattedTime + "\n" +
-                "Validated By: " + validatedBy + "\n" +
-                "Generated At: " + generatedAt + "\n" +
-                "Used At: " + usedAt;
-
-        // SEND EMAIL INCLUDING QR
+        // SEND EMAIL
         emailService.sendTicketEmail(
                 user.getEmailAddress(),
                 ticketPrice,
                 remaining,
-                qrText,
+                qrValue,
                 validatedBy,
                 generatedAt,
                 usedAt
         );
 
-        // ============================================
-        // END UPDATED QR CODE SECTION
-        // ============================================
-
-        // response for frontend
+        // Response to frontend
         Map<String, Object> result = new HashMap<>();
         result.put("ticketPrice", ticketPrice);
         result.put("remainingWallet", remaining);
@@ -119,7 +124,7 @@ public class PaymentService {
     }
 
     // ============================
-    // YOUR ORIGINAL METHODS
+    // ORIGINAL METHODS
     // ============================
 
     public PaymentEntity postPaymentRecord(PaymentEntity paymentEntity) {

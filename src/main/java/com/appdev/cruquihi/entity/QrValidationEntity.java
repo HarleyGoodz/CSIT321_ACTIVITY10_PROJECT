@@ -5,26 +5,28 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 
 @Entity
+@Table(name = "qrvalidation")
 public class QrValidationEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+    @Lob
     private byte[] qr_code;
     private String validation_status;
     private String validated_by;
     private String generated_at;
     private String used_at;
 
-    // ====== 🔥 ADD THIS ONLY — Payment FK (One-to-One) ======
     @OneToOne
     @JoinColumn(name = "payment_id", referencedColumnName = "id")
     private PaymentEntity payment;
-    // =========================================================
 
     public QrValidationEntity(){
         super();
@@ -79,7 +81,6 @@ public class QrValidationEntity {
         this.used_at = used_at;
     }
 
-    // ====== 🔥 ADD GETTER + SETTER FOR PAYMENT ======
     public PaymentEntity getPayment() {
         return payment;
     }
@@ -87,5 +88,4 @@ public class QrValidationEntity {
     public void setPayment(PaymentEntity payment) {
         this.payment = payment;
     }
-    // =================================================
 }
