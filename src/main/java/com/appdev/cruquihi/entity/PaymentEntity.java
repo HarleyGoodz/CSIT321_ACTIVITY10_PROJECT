@@ -73,6 +73,10 @@ public class PaymentEntity {
         this.id = id;
     }
 
+    public int getId() {
+        return id;
+    }
+
     public String getPayment_method() {
         return payment_method;
     }

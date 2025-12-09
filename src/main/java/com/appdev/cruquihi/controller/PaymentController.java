@@ -3,12 +3,16 @@ package com.appdev.cruquihi.controller;
 import java.util.List;
 import java.util.Optional;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.appdev.cruquihi.entity.PaymentEntity;
 import com.appdev.cruquihi.service.PaymentService;
+
+import jakarta.servlet.http.HttpSession;
 
 @RestController
 @RequestMapping(path = "/api/payment")   // ❗ FIXED: removed method=GET
@@ -62,4 +66,25 @@ public class PaymentController {
     public String deletePayment(@PathVariable Integer id) {
         return paymentService.deletePayment(id);
     }
+
+    @PostMapping("/refund/{id}")
+    public ResponseEntity<?> requestInstantRefund(@PathVariable Integer id, HttpSession session) {
+        Integer userId = (Integer) session.getAttribute("userId"); // adjust to your auth system
+        if (userId == null) {
+            return ResponseEntity.status(401).body("Not authenticated");
+        }
+        try {
+            String msg = paymentService.requestInstantRefund(id, userId);
+            return ResponseEntity.ok(msg);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        } catch (RuntimeException e) {
+            // authorization or business rule failure
+            return ResponseEntity.status(403).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Failed to process refund: " + e.getMessage());
+        }
+    }
+
+    
 }
