@@ -34,6 +34,21 @@ public class EmailService {
 
         return baos.toByteArray();
     }
+    
+    public void sendSimpleEmail(String to, String subject, String body) {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, false); // false = not multipart
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(body, false); // false = plain text
+            mailSender.send(mimeMessage);
+        } catch (Exception e) {
+            // Wrap in runtime to surface problems to logs, but listeners should catch exceptions
+            throw new RuntimeException("Failed to send simple email: " + e.getMessage(), e);
+        }
+    }
+
 
     // 🔥 Send ticket email with QR image attached
     public void sendTicketEmail(

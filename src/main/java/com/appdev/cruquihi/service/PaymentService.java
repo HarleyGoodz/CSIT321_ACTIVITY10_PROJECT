@@ -15,6 +15,8 @@ import com.appdev.cruquihi.repository.QrValidationRepository;
 import com.appdev.cruquihi.repository.TicketRepository;
 import com.appdev.cruquihi.repository.UserRepository;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class PaymentService {
 
@@ -32,6 +34,9 @@ public class PaymentService {
 
     @Autowired
     private QrValidationRepository qrRepo;
+
+    @Autowired
+    PaymentRepository prepo;
 
     public PaymentService() {
         super();
@@ -161,4 +166,65 @@ public class PaymentService {
             return "Payment not found";
         }
     }
+
+    @Transactional
+    public String requestInstantRefund(Integer paymentId, Integer requestingUserId) {
+        PaymentEntity payment = paymentRepo.findById(paymentId)
+                .orElseThrow(() -> new NoSuchElementException("Payment not found"));
+
+        // basic permission check
+        if (payment.getUser() == null || payment.getUser().getUserId() != requestingUserId) {
+            throw new RuntimeException("Not authorized to refund this payment");
+        }
+
+        String current = payment.getPayment_status() == null ? "" : payment.getPayment_status().toUpperCase();
+        if ("REFUNDED".equals(current)) {
+            return "Already refunded";
+        }
+
+        // amount to refund
+        Double amountObj = payment.getPayment_amount();
+        double amount = amountObj == null ? 0.0 : amountObj.doubleValue();
+
+        // 1) credit user's wallet (null-safe)
+        UserEntity user = payment.getUser();
+        Double currentWalletObj = user.getWalletAmount(); // works if getter returns double or Double
+        double currentWallet = (currentWalletObj == null) ? 0.0 : currentWalletObj.doubleValue();
+        user.setWalletAmount(currentWallet + amount);
+        userRepo.save(user);
+
+        // 2) set payment as refunded
+        payment.setPayment_status("REFUNDED");
+        payment.setPayment_timestamp(LocalDate.now());
+        paymentRepo.save(payment);
+
+        // 3) restore ticket availability if a ticket exists
+        TicketEntity ticket = payment.getTicket();
+        if (ticket != null) {
+            ticket.setAvailability(true);
+            ticketRepo.save(ticket);
+        }
+
+        // 4) delete QR validations that reference this payment (if any)
+        qrRepo.deleteAllByPayment_IdIn(Collections.singletonList(payment.getId()));
+
+        // 5) send confirmation email (non-fatal if it fails)
+        try {
+            if (user.getEmailAddress() != null && !user.getEmailAddress().isBlank()) {
+                String subject = "Refund processed for payment #" + payment.getId();
+                String body = String.format(
+                    "Hello %s,\n\nYour refund of ₱%.2f for payment ID %d has been processed and added to your wallet.\n\nThank you.",
+                    user.getFullname() == null ? "" : user.getFullname(),
+                    amount,
+                    payment.getId()
+                );
+                emailService.sendSimpleEmail(user.getEmailAddress(), subject, body);
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to send refund confirmation email: " + e.getMessage());
+        }
+
+        return String.format("Refunded ₱%.2f and credited to user wallet", amount);
+    }
+
 }

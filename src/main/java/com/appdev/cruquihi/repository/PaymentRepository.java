@@ -16,5 +16,6 @@ public interface PaymentRepository extends JpaRepository<PaymentEntity, Integer>
 
     // optionally: find payments by ticket id
     List<PaymentEntity> findAllByTicket_TicketId(Integer ticketId);
+    void deleteAllByTicket_TicketIdIn(List<Integer> ticketIds);
 
 }

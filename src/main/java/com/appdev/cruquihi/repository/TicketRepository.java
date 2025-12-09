@@ -9,4 +9,5 @@ import com.appdev.cruquihi.entity.TicketEntity;
 public interface TicketRepository extends JpaRepository<TicketEntity, Integer> {
     // find tickets belonging to an event by event id
     List<TicketEntity> findAllByEvent_EventId(Integer eventId);
+    void deleteAllByEvent_EventId(Integer eventId);
 }
