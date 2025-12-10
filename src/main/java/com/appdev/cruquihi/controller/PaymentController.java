@@ -86,5 +86,27 @@ public class PaymentController {
         }
     }
 
+    @PostMapping("/attendee/approve/{paymentId}")
+    public ResponseEntity<?> approveAttendee(@PathVariable int paymentId) {
+        paymentService.updateAttendeeStatus(paymentId, "APPROVED");
+        return ResponseEntity.ok("Attendee approved");
+    }
+
+    @PostMapping("/attendee/decline/{paymentId}")
+    public ResponseEntity<?> declineAttendee(@PathVariable int paymentId) {
+        paymentService.updateAttendeeStatus(paymentId, "DECLINED");
+        return ResponseEntity.ok("Attendee declined");
+    }
+
+    @GetMapping("/get-by-event/{eventId}")
+public ResponseEntity<?> getByEvent(@PathVariable int eventId) {
+    try {
+        List<PaymentEntity> attendees = paymentService.getPaymentsByEvent(eventId);
+        return ResponseEntity.ok(attendees);
+    } catch (Exception e) {
+        return ResponseEntity.status(500).body("Failed to load attendees: " + e.getMessage());
+    }
+}
+
     
 }

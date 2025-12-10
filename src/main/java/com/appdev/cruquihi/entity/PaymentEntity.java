@@ -21,15 +21,17 @@ public class PaymentEntity {
     @Column(name = "reference_code")
     private String reference_code;
 
+    private String attendee_status = "NONE";
+
     // ================================
     // ONE-TO-ONE RELATIONSHIPS (FKs)
     // ================================
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "ticket_id", referencedColumnName = "ticketId")
     private TicketEntity ticket;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", referencedColumnName = "userId")
     private UserEntity user;
 
@@ -133,4 +135,12 @@ public class PaymentEntity {
     public void setUser(UserEntity user) {
         this.user = user;
     }
+
+    public String getAttendee_status() {
+    return attendee_status;
+}
+
+public void setAttendee_status(String attendee_status) {
+    this.attendee_status = attendee_status;
+}
 }

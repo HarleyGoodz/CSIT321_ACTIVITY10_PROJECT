@@ -33,19 +33,32 @@ public class CheckinService {
     }
 
     public CheckinEntity updateCheckin(Integer id, CheckinEntity newDetails) {
-        CheckinEntity c = new CheckinEntity();
-        try {
-            c = crepo.findById(id).get();
+    CheckinEntity c = new CheckinEntity();
+    try {
+        c = crepo.findById(id).get();
+
+        if (newDetails.getUser() != null) {
             c.setUser(newDetails.getUser());
-            c.setEvent(newDetails.getEvent());
-            c.setCheckinDate(newDetails.getCheckinDate());
-            c.setCheckinStatus(newDetails.getCheckinStatus());
-        } catch (NoSuchElementException e) {
-            throw new NoSuchElementException("Checkin with ID " + id + " not found.");
-        } finally {
-            return crepo.save(c);
         }
+
+        if (newDetails.getEvent() != null) {
+            c.setEvent(newDetails.getEvent());
+        }
+
+        if (newDetails.getCheckinDate() != null) {
+            c.setCheckinDate(newDetails.getCheckinDate());
+        }
+
+        if (newDetails.getCheckinStatus() != null) {
+            c.setCheckinStatus(newDetails.getCheckinStatus());
+        }
+
+        return crepo.save(c);
+
+    } catch (NoSuchElementException e) {
+        throw new NoSuchElementException("Checkin with ID " + id + " not found.");
     }
+}
 
     public String deleteCheckin(Integer id) {
         String msg = "";
