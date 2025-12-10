@@ -227,4 +227,16 @@ public class PaymentService {
         return String.format("Refunded ₱%.2f and credited to user wallet", amount);
     }
 
+    public void updateAttendeeStatus(int paymentId, String status) {
+        PaymentEntity payment = paymentRepo.findById(paymentId)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
+
+        payment.setAttendee_status(status);
+        paymentRepo.save(payment);
+    }
+
+    public List<PaymentEntity> getPaymentsByEvent(int eventId) {
+    return prepo.findByTicketEventEventId(eventId);
+}
+
 }
