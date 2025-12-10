@@ -118,89 +118,96 @@ public class EventService {
         }
         EventEntity event = opt.get();
 
-        // 1) mark event cancelled (keep the DB row so tickets/payments can still reference it)
-        event.setEventStatus("CANCELLED");
-        erepo.save(event);
-
-        // 2) load tickets for the event and mark them unavailable (so they can't be bought again)
+        // Load tickets for the event
         List<TicketEntity> tickets = trepo.findAllByEvent_EventId(id);
-        List<Integer> ticketIds = Collections.emptyList();
-        if (tickets != null && !tickets.isEmpty()) {
-            ticketIds = tickets.stream()
-                            .map(TicketEntity::getTicketId)
-                            .collect(Collectors.toList());
-            tickets.forEach(t -> {
-                t.setAvailability(false);
-                // optional: if you have a 'cancelled' flag on TicketEntity, set it here
-                // t.setIsCancelled(true);
-            });
-            trepo.saveAll(tickets);
-        }
+        List<Integer> ticketIds = (tickets == null ? Collections.emptyList()
+                : tickets.stream().map(TicketEntity::getTicketId).collect(Collectors.toList()));
 
-        // 3) load payments for those tickets
+        // If any payments exist for these tickets -> do CANCEL flow (keep rows)
         List<PaymentEntity> payments = ticketIds.isEmpty()
                 ? Collections.emptyList()
                 : prepo.findAllByTicket_TicketIdIn(ticketIds);
 
-        // 4) attempt instant refunds for each payment (credits wallet + sets REFUNDED)
-        //    collect failures but do not abort the whole operation
-        List<Integer> refundFailed = new ArrayList<>();
         if (payments != null && !payments.isEmpty()) {
+            // *** CANCEL flow: mark event CANCELLED, mark tickets unavailable, attempt refunds, notify users ***
+            event.setEventStatus("CANCELLED");
+            erepo.save(event);
+
+            if (tickets != null && !tickets.isEmpty()) {
+                tickets.forEach(t -> {
+                    t.setAvailability(false);
+                    // t.setIsCancelled(true); // optional if you have such a field
+                });
+                trepo.saveAll(tickets);
+            }
+
+            List<Integer> refundFailed = new ArrayList<>();
             for (PaymentEntity p : payments) {
                 try {
                     String curr = p.getPayment_status() == null ? "" : p.getPayment_status().toUpperCase();
                     if ("REFUNDED".equals(curr)) continue;
-
                     Integer userId = p.getUser() == null ? null : p.getUser().getUserId();
-
-                    // call your PaymentService which credits wallet and updates payment row
                     paymentService.requestInstantRefund(p.getId(), userId);
-
-                    // after this call the payment row should be updated to REFUNDED
-                    // and the user's wallet credited.
                 } catch (Exception ex) {
                     System.err.println("Refund failed for payment id " + p.getId() + ": " + ex.getMessage());
                     refundFailed.add(p.getId());
                 }
             }
-        }
 
-        // 5) delete QR validations referencing those payments (optional cleanup)
-        List<Integer> paymentIds = Collections.emptyList();
-        if (payments != null && !payments.isEmpty()) {
-            paymentIds = payments.stream().map(PaymentEntity::getId).collect(Collectors.toList());
-        }
-        if (paymentIds != null && !paymentIds.isEmpty()) {
-            qrRepo.deleteAllByPayment_IdIn(paymentIds);
-        }
+            // cleanup QR validations referencing those payments (optional)
+            List<Integer> paymentIds = payments.stream().map(PaymentEntity::getId).collect(Collectors.toList());
+            if (!paymentIds.isEmpty()) {
+                qrRepo.deleteAllByPayment_IdIn(paymentIds);
+            }
 
-        // IMPORTANT: DO NOT delete payments or tickets here if you want the My Tickets UI
-        // to keep showing the cards (with status REFUNDED). Keeping rows makes it easy
-        // for the frontend to display refunded payments and their event/ticket info.
-
-        // 6) publish EventDeletedEvent to notify users (listener sends emails AFTER_COMMIT)
-        List<String> recipients = new ArrayList<>();
-        if (event.getUser() != null && event.getUser().getEmailAddress() != null) {
-            recipients.add(event.getUser().getEmailAddress());
-        }
-        if (payments != null && !payments.isEmpty()) {
+            // notify users after commit
+            List<String> recipients = new ArrayList<>();
+            if (event.getUser() != null && event.getUser().getEmailAddress() != null) {
+                recipients.add(event.getUser().getEmailAddress());
+            }
             payments.stream()
-                .map(p -> p.getUser() == null ? null : p.getUser().getEmailAddress())
-                .filter(Objects::nonNull)
-                .distinct()
-                .forEach(recipients::add);
-        }
-        publisher.publishEvent(new EventDeletedEvent(this, id, event.getEventName(), recipients));
+                    .map(p -> p.getUser() == null ? null : p.getUser().getEmailAddress())
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .forEach(recipients::add);
 
-        // 7) return summary
-        String msg = "Event with ID " + id + " marked CANCELLED. ";
-        if (!refundFailed.isEmpty()) {
-            msg += "Refunds failed for payment IDs: " + refundFailed.toString();
+            publisher.publishEvent(new EventDeletedEvent(this, id, event.getEventName(), recipients));
+
+            String msg = "Event with ID " + id + " marked CANCELLED. ";
+            if (!refundFailed.isEmpty()) {
+                msg += "Refunds failed for payment IDs: " + refundFailed.toString();
+            } else {
+                msg += "All payments refunded (or already refunded).";
+            }
+            return msg;
         } else {
-            msg += "All payments refunded (or already refunded).";
+            // *** DELETE flow: no payments found -> safe to delete tickets then event completely ***
+            // delete any QR validations referencing (should be none if payments empty)
+            if (!ticketIds.isEmpty()) {
+                // If your QR repo keeps references to tickets, add deletion by ticket id here. Example:
+                // qrRepo.deleteAllByTicket_TicketIdIn(ticketIds);
+            }
+
+            // delete tickets
+            if (tickets != null && !tickets.isEmpty()) {
+                trepo.deleteAll(tickets);
+            }
+
+            // finally delete the event row
+            erepo.delete(event);
+
+            // Optionally notify organizer only (no refunds since no purchases)
+            List<String> recipients = new ArrayList<>();
+            if (event.getUser() != null && event.getUser().getEmailAddress() != null) {
+                recipients.add(event.getUser().getEmailAddress());
+                publisher.publishEvent(new EventDeletedEvent(this, id, event.getEventName(), recipients));
+            }
+
+            return "Event with ID " + id + " deleted (no tickets were purchased).";
         }
-        return msg;
     }
+
+
 
     public List<EventEntity> getEventsByUser(Integer userId) {
         return erepo.findAllByUserUserId(userId);

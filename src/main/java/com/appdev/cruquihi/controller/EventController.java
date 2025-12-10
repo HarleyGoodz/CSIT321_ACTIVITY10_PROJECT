@@ -1,5 +1,6 @@
 package com.appdev.cruquihi.controller;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -75,9 +76,16 @@ public class EventController {
     // DELETE EVENT
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteEvent(@PathVariable Integer id) {
-        String msg = eserv.deleteEvent(id);
-        return ResponseEntity.ok(msg);
+        try {
+            String msg = eserv.deleteEvent(id);
+            return ResponseEntity.ok(Collections.singletonMap("message", msg));
+        } catch (Exception ex) {
+            // if anything unexpected bubbles up
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", ex.getMessage()));
+        }
     }
+
+
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<?> getEventsByUser(@PathVariable Integer userId) {
