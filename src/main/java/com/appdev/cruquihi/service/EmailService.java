@@ -82,7 +82,7 @@ public class EmailService {
                     "Please scan the attached QR code for ticket validation.\n\n" +
                     "This is an automated message.";
 
-            helper.setText(body);
+                    helper.setText(body, false);
 
             // Attach QR image
             helper.addAttachment("ticket-qr.png",
