@@ -95,7 +95,14 @@ public class PaymentService {
         // ===============================
         // 🔥 CREATE QR VALIDATION ENTRY
         // ===============================
-        String qrValue = UUID.randomUUID().toString();
+        String qrValue =
+        
+        "Ticket ID: " + ticket.getTicketId() + "\n" +
+        "User ID: " + user.getUserId() + "\n" +
+        "Name: " + user.getFullname() + "\n" +
+        "Email: " + user.getEmailAddress() + "\n" +
+        "Event ID: " + ticket.getEvent().getEventId() + "\n" +
+        "Generated At: " + LocalDate.now();
         String validatedBy = "System";
         String generatedAt = LocalDate.now().toString();
         String usedAt = "Not used yet";
